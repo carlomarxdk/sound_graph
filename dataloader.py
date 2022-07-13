@@ -8,15 +8,14 @@ import torch
 
 
 class MidiDataModule(pl.core.LightningDataModule):
-    def __init__(self, tokenizer: str = "REMI", data_path: str = "data", to_prepare: bool = False):
+    def __init__(self, hparams):
         super().__init__()
-        self.data_path = data_path
-        self.tokenizer = self.init_tokenizer(tokenizer)
-        self.to_prepare = to_prepare
+        self._hparams = hparams
+        self.tokenizer = self.init_tokenizer(hparams["tokenizer"])
 
     def prepare_data(self):
         ### Convert MIDI files to JSON
-        if self.to_prepare:
+        if self._hparams["prepare_data"]:
             self.tokenizer.tokenize_midi_dataset(self.get_path("train_midi"),
                      "data/train", self.midi_valid)
             self.tokenizer.tokenize_midi_dataset(self.get_path("val_midi"),
@@ -28,31 +27,30 @@ class MidiDataModule(pl.core.LightningDataModule):
         
 
     def train_dataloader(self):
-        return DataLoader(self.train_dataset, batch_size=16)
+        return DataLoader(self.train_dataset, batch_size=self._hparams["batch_size"], 
+                          num_workers=self._hparams["num_workers"])
 
     def val_dataloader(self):
-        return DataLoader(self.val_dataset, batch_size=16)
+        return DataLoader(self.val_dataset, batch_size=self._hparams["batch_size"],
+                          num_workers=self._hparams["num_workers"])
     
     def init_tokenizer(self, tokenizer = "REMI"):
         if tokenizer == "REMI":
-            pitch_range= range(21,109)
-            beat_res = {(0,4):8, (4,12):4}
-            nb_velocities = 32
-            additional_tokens = {'Chord': True, 'Rest': True, 'Tempo': True, 'Program': False,
-                     'rest_range': (2, 8),  # (half, 8 beats)
-                     'nb_tempos': 32,  # nb of tempo bins
-                     'tempo_range': (40, 250),
-                     'TimeSignature': False}
-            return REMI(pitch_range, beat_res, nb_velocities, additional_tokens, mask=True)
+            return REMI(pitch_range=self._hparams["pitch_range"], 
+                        beat_res = self._hparams["beat_res"] , 
+                        nb_velocities = self._hparams["nb_velocities"], 
+                        additional_tokens = self._hparams["additional_tokens"], 
+                        mask=True)
         else:
             raise NotImplementedError()
 
-    def get_dataset(self, dir: str, max_len = 512):
-        files = glob.glob(self.data_path + "/%s/*.json" %dir)
+    def get_dataset(self, dir: str):
+        max_len = self._hparams["sequence_len"]
+        files = glob.glob(self._hparams["data_path"] + "/%s/*.json" %dir)
         x = torch.zeros(size=(len(files), max_len))
         for i, file in enumerate(files):
             with open(file, "rb") as f:
-                _x = torch.tensor(json.load(f)["tokens"][0][:max_len])
+                _x = torch.tensor(json.load(f)["tokens"][0][:max_len]) 
                 x[i, :len(_x) ] += _x
         return TensorDataset(x)
 

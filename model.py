@@ -5,15 +5,16 @@ from performer_pytorch.autoregressive_wrapper import AutoregressiveWrapper
 from torch.cuda.amp import autocast, GradScaler
 
 class MusicPerformer(pl.LightningModule):
-    def __init__(self) -> None:
+    def __init__(self, hparams) -> None:
         super().__init__()
         ### Hyperparameters for the Transformer
+        self._hparams = hparams
         self.transformer = PerformerLM(
-            num_tokens = 278,               # vocab size
-            max_seq_len = 512,             # max sequence length
-            dim = 256,                      # dimension
-            depth = 12,                     # layers
-            heads = 8,                      # heads
+            num_tokens = hparams["vocab_size"],               # vocab size
+            max_seq_len = hparams["sequence_len"],             # max sequence length
+            dim = hparams["hidden_size"],                      # dimension
+            depth = hparams["num_encoders"],                     # layers
+            heads = hparams["num_heads"],                      # heads
             causal = True,                 # auto-regressive or not
             nb_features = 256,              # number of random features, if not set, will default to (d * log(d)), where d is the dimension of each head
             no_projection=False,
@@ -36,20 +37,25 @@ class MusicPerformer(pl.LightningModule):
         return self.transformer(x.long(), return_loss = True)
 
     def training_step(self, batch, batch_idx):
-        x = batch[0]
+        x = batch[0] 
         loss = self(x)
         return loss
 
     def validation_step(self,  batch, batch_idx):
         if batch_idx == 0:
-            x = batch[0][1][:20]
+            x = batch[0][1][:self._hparams["init_len_generate"]]
 
-            sample = self.transformer.generate(start_tokens= x.long(), seq_len= 100, repetition_penalty=0.2)
-            #print([vocab[int(i)] for i in sample.tolist()[:30]])
+            sample = self.transformer.generate(start_tokens= x.long(), 
+            seq_len= self._hparams["seq_len_generate"], 
+            repetition_penalty=self._hparams["repetition_penalty"],
+            temperature=self._hparams["temperature"])
+
+            #### Concatenate initial tokens with the generated ones
             out = [[int(i) for i in  x.tolist() + sample.tolist()]]
             out = self.trainer.datamodule.tokenizer.tokens_to_midi(out)
-            out.dump("outputs/1_%s_out.midi" %self.current_epoch)
+            out.dump("outputs/%s_%s_out.midi" %(self._hparams["version"], self.current_epoch))
 
     def configure_optimizers(self):
-        return torch.optim.AdamW(self.parameters(), lr=0.005)
+        return torch.optim.AdamW(self.parameters(), lr=self._hparams["learning_rate"], 
+                                weight_decay=self._hparams["weight_decay"])
         
