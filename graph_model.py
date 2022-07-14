@@ -34,7 +34,7 @@ class GraphPerformerLM(PerformerLM):
         if exists(self.to_out):
             return self.to_out(x)
 
-        return x @ self.token_emb.weight.t()
+        return x @ self.token_emb.weight.t() ### quesion is here 
 
 class GCN(torch.nn.Module):
     def __init__(self, hidden_channels):
