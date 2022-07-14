@@ -73,7 +73,7 @@ class GraphDataModule(pl.core.LightningDataModule):
             sample = music21.corpus.parse(chorale)
             data, x, edge_music, edge_attr = return_graph(sample)
             datasets.append(data)
-
+    ### what we are missing is some kind of encoding back to the chords? 
         self.train_dataset = ConcatDataset(datasets=datasets)
         self.val_dataset = ConcatDataset(datasets=datasets)
         
