@@ -1,7 +1,7 @@
 import pytorch_lightning as pl
 import torch
 from performer_pytorch.performer_pytorch import PerformerLM
-from performer_pytorch.autoregressive_wrapper import AutoregressiveWrapper
+from performer_pytorch.autoregressive_wrapper import AutoregressiveWrapper, top_k, top_p
 from torch.cuda.amp import autocast, GradScaler
 
 class MusicPerformer(pl.LightningModule):
@@ -43,18 +43,37 @@ class MusicPerformer(pl.LightningModule):
 
     def validation_step(self,  batch, batch_idx):
         if batch_idx == 0:
-            x = batch[0][1][:self._hparams["init_len_generate"]]
+            self.generate_sequence(batch[0][1], output_filename=self.current_epoch,
+                                   num_tokens_to_use=self._hparams["init_len_generate"],
+                                   num_token_to_generate= self._hparams["seq_len_generate"], 
+                                   repetition_penalty=self._hparams["repetition_penalty"],
+                                   temperature=self._hparams["temperature"])
 
-            sample = self.transformer.generate(start_tokens= x.long(), 
-            seq_len= self._hparams["seq_len_generate"], 
-            repetition_penalty=self._hparams["repetition_penalty"],
-            temperature=self._hparams["temperature"])
+    def generate_sequence(self, input_sequence, output_filename: str, num_tokens_to_use: int = 50,
+                                num_token_to_generate: int = 100,
+                                temperature = 1.0, 
+                                repetition_penalty = 0.0,
+                                filter_thres = 0.9, 
+                                filter_logits_fn="top_k"):
+        if filter_logits_fn == "top_k":
+            filter_logits_fn = top_k
+        elif filter_logits_fn == "top_p":
+            filter_logits_fn = top_p
+        else:
+            raise NotImplementedError()
 
-            #### Concatenate initial tokens with the generated ones
-            out = [[int(i) for i in  x.tolist() + sample.tolist()]]
-            out = self.trainer.datamodule.tokenizer.tokens_to_midi(out)
-            out.dump("outputs/%s_%s_out.midi" %(self._hparams["version"], self.current_epoch))
+        x = input_sequence[:num_tokens_to_use]
+        out = self.transformer.generate(start_tokens= x.long(), 
+                                        seq_len=num_token_to_generate, 
+                                        repetition_penalty=repetition_penalty,
+                                        temperature=temperature, 
+                                        filter_thres=filter_thres,
+                                        filter_logits_fn=filter_logits_fn)
 
+        out = [[int(i) for i in  x.tolist() + out.tolist()]]
+        out = self.trainer.datamodule.tokenizer.tokens_to_midi(out)
+        out.dump("outputs/%s_%s.midi" %(self._hparams["version"], output_filename))
+        
     def configure_optimizers(self):
         return torch.optim.AdamW(self.parameters(), lr=self._hparams["learning_rate"], 
                                 weight_decay=self._hparams["weight_decay"])
