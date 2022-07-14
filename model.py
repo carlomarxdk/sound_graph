@@ -2,7 +2,6 @@ import pytorch_lightning as pl
 import torch
 from performer_pytorch.performer_pytorch import PerformerLM
 from performer_pytorch.autoregressive_wrapper import AutoregressiveWrapper, top_k, top_p
-from torch.cuda.amp import autocast, GradScaler
 
 class MusicPerformer(pl.LightningModule):
     def __init__(self, hparams) -> None:
@@ -77,4 +76,6 @@ class MusicPerformer(pl.LightningModule):
     def configure_optimizers(self):
         return torch.optim.AdamW(self.parameters(), lr=self._hparams["learning_rate"], 
                                 weight_decay=self._hparams["weight_decay"])
-        
+
+
+
