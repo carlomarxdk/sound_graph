@@ -1,7 +1,7 @@
 import pytorch_lightning as pl
 import torch
 from performer_pytorch.performer_pytorch import PerformerLM, exists
-from performer_pytorch.autoregressive_wrapper import AutoregressiveWrapper, 
+from performer_pytorch.autoregressive_wrapper import AutoregressiveWrapper
 from torch.nn import Linear
 import torch.nn.functional as F
 from torch_geometric.nn import GATv2Conv
