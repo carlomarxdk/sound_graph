@@ -32,7 +32,7 @@ class MidiDataModule(pl.core.LightningDataModule):
 
     def val_dataloader(self):
         return DataLoader(self.val_dataset, batch_size=self._hparams["batch_size"],
-                          num_workers=self._hparams["num_workers"], shuffle=True)
+                          num_workers=self._hparams["num_workers"], shuffle=False)
     
     def init_tokenizer(self, tokenizer = "REMI"):
         if tokenizer == "REMI":
