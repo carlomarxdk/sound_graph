@@ -5,7 +5,7 @@ from performer_pytorch.autoregressive_wrapper import AutoregressiveWrapper
 from torch.nn import Linear
 import torch.nn.functional as F
 from torch_geometric.nn import GATv2Conv
-from dataloader import MusicPerformer
+from model import MusicPerformer
 
 class GraphMusicPerformer(MusicPerformer):
     def __init__(self, hparams) -> None:
