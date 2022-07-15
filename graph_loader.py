@@ -1,13 +1,8 @@
-import networkx as nx
-import matplotlib.pyplot as plt
 import music21
 import numpy as np
 import torch
 import pytorch_lightning as pl
-from torch_geometric.utils import erdos_renyi_graph, to_networkx
 from torch_geometric.data import Data
-
-from IPython.display import Image, Audio
 
 from torch.utils.data import ConcatDataset, DataLoader
 from torch_geometric.data import Data

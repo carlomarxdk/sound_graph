@@ -48,7 +48,33 @@ class AutoregressiveGraphWrapper(AutoregressiveWrapper):
         return loss
 class GraphPerformerLM(PerformerLM):
     def __init__(self, num_tokens, max_seq_len, dim, depth, heads, dim_head=64, local_attn_heads=0, local_window_size=256, causal=False, ff_mult=4, nb_features=None, feature_redraw_interval=1000, reversible=False, ff_chunks=1, ff_glu=False, emb_dropout=0, ff_dropout=0, attn_dropout=0, generalized_attention=False, kernel_fn=..., use_scalenorm=False, use_rezero=False, cross_attend=False, no_projection=False, tie_embed=False, rotary_position_emb=True, axial_position_emb=False, axial_position_shape=None, auto_check_redraw=True, qkv_bias=False, attn_out_bias=False, shift_tokens=False):
-        super().__init__(num_tokens=num_tokens, max_seq_len=max_seq_len, dim= dim, depth = depth, heads=heads, dim_head=dim_head, local_attn_heads, local_window_size, causal, ff_mult, nb_features, feature_redraw_interval, reversible, ff_chunks, ff_glu, emb_dropout, ff_dropout, attn_dropout, generalized_attention, kernel_fn, use_scalenorm, use_rezero, cross_attend, no_projection, tie_embed, rotary_position_emb, axial_position_emb, axial_position_shape, auto_check_redraw, qkv_bias, attn_out_bias, shift_tokens)
+        super().__init__(num_tokens=num_tokens, max_seq_len=max_seq_len, dim= dim, depth = depth, heads=heads, dim_head=dim_head, 
+        local_attn_heads = local_attn_heads,
+        local_window_size = local_window_size, 
+        causal=causal, 
+        ff_mult = ff_mult, 
+        nb_features = nb_features, 
+        feature_redraw_interval = feature_redraw_interval, 
+        reversible = reversible, 
+        ff_chunks = ff_chunks, 
+        ff_glu = ff_glu, 
+        emb_dropout = emb_dropout, 
+        ff_dropout = ff_dropout, 
+        attn_dropout = attn_dropout, 
+        generalized_attention = generalized_attention, 
+        kernel_fn = None, 
+        use_scalenorm = use_scalenorm, 
+        use_rezero = use_rezero, 
+        cross_attend = cross_attend, 
+        no_projection = no_projection,
+        tie_embed = False, 
+        rotary_position_emb = rotary_position_emb, 
+        axial_position_emb = axial_position_emb, 
+        axial_position_shape = axial_position_shape, 
+        auto_check_redraw = auto_check_redraw, 
+        qkv_bias = qkv_bias, 
+        attn_out_bias = attn_out_bias, 
+        shift_tokens = shift_tokens)
         self.graph_layer = GCN(hidden_channels=dim)
         del self.token_emb 
         del self.to_out
